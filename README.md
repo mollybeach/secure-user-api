@@ -27,3 +27,25 @@ A simple REST API for managing users securely with OAuth2 and JWT authentication
 - `POST /register` - Register a new user
 - `POST /login` - Login and get a JWT
 - `GET /profile` - Get user profile (JWT required)
+
+## File Structure
+
+```
+secure-user-api/
+├── .env
+├── .git/
+├── .gitignore
+├── README.md
+├── config/
+│   └── config.json
+├── env.example
+├── migrations/
+├── models/
+│   ├── User.js
+│   └── index.js
+├── node_modules/
+├── package-lock.json
+├── package.json
+└── seeders/
+```
+
