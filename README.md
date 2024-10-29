@@ -39,6 +39,10 @@ secure-user-api/
 ├── config/
 │   └── config.json
 ├── env.example
+├── index.js
+├── middleware/
+│   ├──  oauthAuth.js
+│   └── jwtAuth.js
 ├── migrations/
 ├── models/
 │   ├── User.js
@@ -46,6 +50,10 @@ secure-user-api/
 ├── node_modules/
 ├── package-lock.json
 ├── package.json
+├── routes/
+│   ├── authRoutes.js
+│   └── userRoutes.js
 └── seeders/
+
 ```
 
