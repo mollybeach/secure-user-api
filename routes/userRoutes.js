@@ -80,4 +80,51 @@ router.get('/users', async (req, res) => {
   }
 });
 
+// Update user profile
+router.put('/users/:id', jwtAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Ensure user can only update their own profile
+    if (req.user.id != id) {
+      return res.status(403).json({ message: "Not authorized to update this profile" });
+    }
+
+    const { username, email } = req.body;
+    const updatedUser = await User.update(
+      { username, email },
+      { 
+        where: { id },
+        returning: true
+      }
+    );
+
+    res.json({ message: "Profile updated successfully", user: updatedUser[1][0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error updating profile", error: error.message });
+  }
+});
+
+// Delete user account
+router.delete('/users/:id', jwtAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Ensure user can only delete their own account
+    if (req.user.id != id) {
+      return res.status(403).json({ message: "Not authorized to delete this account" });
+    }
+
+    await User.destroy({
+      where: { id }
+    });
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error deleting account", error: error.message });
+  }
+});
+
 module.exports = router;
