@@ -69,11 +69,14 @@ router.get('/profile', jwtAuth, async (req, res) => {
   }
 });
 
-// Fetch all users from the database (New Route)
-router.get('/users', async (req, res) => {
+// Protected users list route
+router.get('/users', jwtAuth, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM users');
-    res.json(result.rows); // Return the rows from the query result
+    // Only select non-sensitive fields
+    const result = await pool.query(
+      'SELECT id, email, created_at FROM users'
+    );
+    res.json(result.rows);
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).send('Server error');
