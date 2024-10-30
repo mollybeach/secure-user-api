@@ -107,7 +107,12 @@ secure-user-api/
 │   │   ├── manifest.json
 │   │   └── robots.txt
 │   ├── src/
-│   │   ├── App.css
+│   │   ├── components/
+│   │   │   ├── Register.css
+│   │   │   └── Register.js
+│   │   ├── styles/
+│   │   │   ├── App.css
+│   │   │   └── Register.css
 │   │   ├── App.js
 │   │   ├── App.test.js
 │   │   ├── index.css
@@ -115,19 +120,23 @@ secure-user-api/
 │   │   ├── logo.svg
 │   │   ├── reportWebVitals.js
 │   │   └── setupTests.js
+│   ├── .env
 │   ├── .gitignore
+│   ├── env.example
 │   ├── package-lock.json
 │   ├── package.json
 │   ├── README.md
 │   └── webpack.config.js
 ├── config/
-│   ├── config.json
+│   ├── config.js
 │   └── db.js
 ├── middleware/
 │   ├── jwtAuth.js
 │   └── oauthAuth.js
 ├── migrations/
-│   └── 20241029210158-create-users-table.js
+│   ├── 20241029210158-create-users-table.js
+│   ├── rename-timestamp-columns.js
+│   └── YYYYMMDDHHMMSS-add-timestamps-to-users.js
 ├── models/
 │   ├── index.js
 │   └── User.js
