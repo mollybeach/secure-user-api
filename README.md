@@ -32,28 +32,29 @@ A simple REST API for managing users securely with OAuth2 and JWT authentication
 
 ```
 secure-user-api/
-├── .env
 ├── .git/
-├── .gitignore
-├── README.md
 ├── config/
-│   └── config.json
-├── env.example
-├── index.js
+│   ├── config.json
+│   └── db.js
 ├── middleware/
 │   ├──  oauthAuth.js
 │   └── jwtAuth.js
 ├── migrations/
+│   └── 20241029210158-create-users-table.js
 ├── models/
-│   ├── User.js
-│   └── index.js
+│   ├── index.js
+│   └── User.js
 ├── node_modules/
-├── package-lock.json
-├── package.json
 ├── routes/
 │   ├── authRoutes.js
 │   └── userRoutes.js
-└── seeders/
-
+├── seeders/
+├── .env
+├── .gitignore
+├── env.example
+├── index.js
+├── package-lock.json
+├── package.json
+└── README.md
 ```
 
