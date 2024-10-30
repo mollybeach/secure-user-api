@@ -1,57 +1,141 @@
+// path: routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
 const { User } = require('../models'); // Assuming you're using Sequelize for models
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const jwtAuth = require('../middleware/jwtAuth');
-const pool = require('../config/db'); // For raw SQL queries using the PostgreSQL connection pool
+const passport = require('passport');
+const { check, validationResult } = require('express-validator');
 
-// Register a new user
-router.post('/register', async (req, res) => {
-  const { email, password } = req.body;
+// Validation middleware
+const registerValidation = [
+  check('email')
+    .isEmail().withMessage('Please provide a valid email')
+    .normalizeEmail(),
+  check('password')
+    .isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+    .matches(/\d/).withMessage('Password must contain a number')
+    .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter'),
+  check('username')
+    .optional()
+    .isLength({ min: 3 }).withMessage('Username must be at least 3 characters')
+    .matches(/^[A-Za-z0-9_-]+$/).withMessage('Username can only contain letters, numbers, underscores, and dashes')
+];
 
+const updateValidation = [
+  check('email')
+    .optional()
+    .isEmail().withMessage('Please provide a valid email')
+    .normalizeEmail(),
+  check('username')
+    .optional()
+    .isLength({ min: 3 }).withMessage('Username must be at least 3 characters')
+    .matches(/^[A-Za-z0-9_-]+$/).withMessage('Username can only contain letters, numbers, underscores, and dashes')
+];
+
+// Public Routes
+router.get('/users', async (req, res) => {
   try {
-    // Hash the password before saving
-    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log('Attempting to fetch users...');
+    const users = await User.findAll({
+      attributes: ['id', 'email', 'created_at'],
+      order: [['created_at', 'DESC']]
+    });
+    
+    console.log('Users fetched successfully:', users);
+    res.json(users);
+  } catch (error) {
+    console.error('Detailed error fetching users:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    res.status(500).json({ 
+      errors: [{ 
+        msg: 'Error fetching users',
+        detail: error.message // Adding this for debugging
+      }] 
+    });
+  }
+});
 
-    // Create a new user in the database
+router.post('/register', registerValidation, async (req, res) => {
+  try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { email, password } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ 
+        errors: [{ msg: 'User already exists with this email' }] 
+      });
+    }
+
+    // Hash password and create user
+    const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ email, password: hashedPassword });
+
     res.status(201).json({
       id: user.id,
       email: user.email,
     });
   } catch (error) {
-    console.error(error);
-    res.status(400).send('Error creating user');
+    console.error('Registration error:', error);
+    res.status(500).send('Error creating user');
   }
 });
 
-// Login route
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-
   try {
+    const { email, password } = req.body;
+
+    // Find user
     const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(400).send('Email not found');
+    if (!user) {
+      return res.status(401).json({ 
+        errors: [{ msg: 'Invalid credentials' }] 
+      });
+    }
 
-    // Compare the entered password with the stored hash
+    // Validate password
     const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) return res.status(400).send('Invalid password');
+    if (!validPassword) {
+      return res.status(401).json({ 
+        errors: [{ msg: 'Invalid credentials' }] 
+      });
+    }
 
-    // Generate a JWT token
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    
-    res.header('Authorization', 'Bearer ' + token).json({
-      message: 'Logged in successfully',
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    // Send response with token
+    res.json({
       token,
+      user: {
+        id: user.id,
+        email: user.email
+      }
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).send('Server error');
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      errors: [{ msg: 'Server error during login' }] 
+    });
   }
 });
 
-// Protected profile route (requires JWT authentication)
+// Protected Routes (all require jwtAuth)
 router.get('/profile', jwtAuth, async (req, res) => {
   try {
     // Find the authenticated user by ID
@@ -69,22 +153,7 @@ router.get('/profile', jwtAuth, async (req, res) => {
   }
 });
 
-// Protected users list route
-router.get('/users', jwtAuth, async (req, res) => {
-  try {
-    // Only select non-sensitive fields
-    const result = await pool.query(
-      'SELECT id, email, created_at FROM users'
-    );
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).send('Server error');
-  }
-});
-
-// Update user profile
-router.put('/users/:id', jwtAuth, async (req, res) => {
+router.put('/users/:id', jwtAuth, updateValidation, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -109,7 +178,6 @@ router.put('/users/:id', jwtAuth, async (req, res) => {
   }
 });
 
-// Delete user account
 router.delete('/users/:id', jwtAuth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -128,6 +196,53 @@ router.delete('/users/:id', jwtAuth, async (req, res) => {
     console.error(error);
     res.status(500).json({ message: "Error deleting account", error: error.message });
   }
+});
+
+// Initiate GitHub OAuth flow
+router.get('/auth/github',
+  passport.authenticate('github', { scope: ['user:email'] })
+);
+
+// GitHub OAuth callback
+router.get('/auth/github/callback',
+  passport.authenticate('github', { failureRedirect: '/login' }),
+  async (req, res) => {
+    try {
+      // Generate JWT token for the authenticated user
+      const token = jwt.sign(
+        { id: req.user.id },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
+
+      // You can either redirect with the token or send it in the response
+      res.json({
+        message: 'GitHub authentication successful',
+        token,
+        user: {
+          id: req.user.id,
+          email: req.user.email
+        }
+      });
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      res.status(500).json({ message: 'Authentication failed' });
+    }
+  }
+);
+
+// Optional: Add a logout route
+router.get('/logout', (req, res) => {
+  req.logout();
+  res.redirect('/');
+});
+
+// Verify token route (helpful for debugging)
+router.get('/verify-token', jwtAuth, (req, res) => {
+  res.json({ 
+    valid: true, 
+    user: req.user 
+  });
 });
 
 module.exports = router;

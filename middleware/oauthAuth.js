@@ -1,25 +1,42 @@
 // path: middleware/oauthAuth.js
 const passport = require('passport');
-const GitHubStrategy = require('passport-github').Strategy;
+const GitHubStrategy = require('passport-github2').Strategy;
+const { User } = require('../models');
 
+// Configure GitHub Strategy
 passport.use(new GitHubStrategy({
     clientID: process.env.OAUTH_CLIENT_ID,
     clientSecret: process.env.OAUTH_CLIENT_SECRET,
-    callbackURL: "http://localhost:3000/auth/github/callback"
+    callbackURL: `http://localhost:${process.env.SERVER_PORT}/auth/github/callback`
   },
-  function(accessToken, refreshToken, profile, done) {
-    // Here you would usually find the user in your database and return it
-    // For now, we'll just return the profile
-    return done(null, profile);
+  async function(accessToken, refreshToken, profile, done) {
+    try {
+      const [user] = await User.findOrCreate({
+        where: { githubId: profile.id },
+        defaults: {
+          email: profile.emails?.[0]?.value,
+          username: profile.username
+        }
+      });
+      
+      return done(null, user);
+    } catch (error) {
+      return done(error, null);
+    }
   }
 ));
 
 passport.serializeUser((user, done) => {
-  done(null, user);
+  done(null, user.id);
 });
 
-passport.deserializeUser((obj, done) => {
-  done(null, obj);
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findByPk(id);
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
 });
 
 module.exports = passport;

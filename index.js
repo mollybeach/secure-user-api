@@ -1,3 +1,4 @@
+// path: index.js
 require('dotenv').config();
 
 const express = require('express');
@@ -14,9 +15,9 @@ app.use(express.json());
 
 // Session management (required for Passport.js)
 app.use(session({
-  secret: process.env.JWT_SECRET,
+  secret: process.env.JWT_SECRET || 'jwt-secret',
   resave: false,
-  saveUninitialized: true
+  saveUninitialized: false
 }));
 
 // Initialize Passport.js
@@ -25,14 +26,44 @@ app.use(passport.session());
 
 // Optional root route
 app.get('/', (req, res) => {
-  res.send('Welcome to the secure-user-api!');
+  const SERVER_PORT = process.env.SERVER_PORT || 3000;
+  res.send(`
+    <html>
+      <body>
+        <h1>Welcome to the secure-user-api!</h1>
+        <p>Click <a href="http://localhost:${SERVER_PORT}/api/public/users">here</a> to visit /api/public/users</p>
+        <p>Click <a href="http://localhost:${SERVER_PORT}/api/register">here</a> to visit /api/register</p>
+        <p>Click <a href="http://localhost:${SERVER_PORT}/api/login">here</a> to visit /api/login</p>
+        <p>Click <a href="http://localhost:${SERVER_PORT}/api/logout">here</a> to visit /api/logout</p>
+        <p>Click <a href="http://localhost:${SERVER_PORT}/api/github">here</a> to visit /api/github</p>
+        <p>Click <a href="http://localhost:${SERVER_PORT}/api/github/callback">here</a> to visit /api/github/callback</p>
+      </body>
+    </html>
+  `);
 });
 
-// Routes
-app.use('/api', userRoutes);  // User-related routes (e.g., register, login)
-app.use('/', authRoutes);     // OAuth authentication routes
+// Public routes (no auth required)
+app.use('/api/public', userRoutes);    // Public routes like /users, /register, /login
+app.use('/api/auth', authRoutes);      // OAuth routes
+
+// Protected routes (require JWT auth)
+app.use('/api/protected', jwtAuth, userRoutes); // All protected routes
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    errors: [{ msg: 'Something broke!', error: err.message }] 
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ 
+    errors: [{ msg: 'Route not found' }] 
+  });
+});
 
 // Start the server
-app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
-});
+const PORT = process.env.SERVER_PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT} \n http://localhost:${PORT}`));
