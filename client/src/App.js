@@ -1,6 +1,9 @@
 // frontend/src/App.js
 import React, { useState } from 'react';
 
+const serverPort = process.env.SERVER_PORT || 3000;
+const apiUrl = `http://localhost:${serverPort}`;
+
 function App() {
   const [response, setResponse] = useState('');
 
@@ -12,7 +15,7 @@ function App() {
     };
 
     try {
-      const res = await fetch('/api/register', {
+      const res = await fetch(`${apiUrl}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(user),
@@ -32,7 +35,7 @@ function App() {
     };
 
     try {
-      const res = await fetch('/api/login', {
+      const res = await fetch(`${apiUrl}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(user),
@@ -47,7 +50,7 @@ function App() {
   // Function to get all users
   const handleGetUsers = async () => {
     try {
-      const res = await fetch('/api/users');
+      const res = await fetch(`${apiUrl}/api/public/users`);
       const data = await res.json();
       setResponse(JSON.stringify(data, null, 2));
     } catch (err) {

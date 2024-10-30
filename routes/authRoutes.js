@@ -3,7 +3,7 @@ const router = express.Router();
 const passport = require('../middleware/oauthAuth');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 // Add regular login endpoint
 router.post('/login', async (req, res) => {
@@ -35,6 +35,31 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ errors: [{ msg: 'Server error during login' }] });
+  }
+});
+
+router.post('/register', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ errors: [{ msg: 'User already exists' }] });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await User.create({
+      email,
+      password: hashedPassword
+    });
+
+    res.status(201).json({ message: 'User registered successfully' });
+  } catch (error) {
+    res.status(500).json({ errors: [{ msg: error.message }] });
   }
 });
 

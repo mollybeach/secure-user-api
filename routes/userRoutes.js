@@ -39,8 +39,8 @@ router.get('/users', async (req, res) => {
   try {
     console.log('Attempting to fetch users...');
     const users = await User.findAll({
-      attributes: ['id', 'email', 'created_at'],
-      order: [['created_at', 'DESC']]
+      attributes: ['id', 'username', 'email', 'createdAt', 'updatedAt'],
+      order: [['createdAt', 'DESC']]
     });
     
     console.log('Users fetched successfully:', users);

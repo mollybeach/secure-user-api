@@ -2,6 +2,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const cors = require('cors');
 const passport = require('./middleware/oauthAuth');
 const jwtAuth = require('./middleware/jwtAuth');
 const session = require('express-session');
@@ -9,6 +10,16 @@ const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
 
 const app = express();
+
+// CORS configuration
+const corsOptions = {
+  origin: 'http://localhost:3001', // Your React frontend URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 
 // Middleware for parsing JSON bodies
 app.use(express.json());
@@ -32,6 +43,7 @@ app.get('/', (req, res) => {
       <body>
         <h1>Welcome to the secure-user-api!</h1>
         <p>Click <a href="http://localhost:${SERVER_PORT}/api/public/users">here</a> to visit /api/public/users</p>
+        <p>Click <a href="http://localhost:${SERVER_PORT}/api/auth">here</a> to visit /api/auth</p>
         <p>Click <a href="http://localhost:${SERVER_PORT}/api/register">here</a> to visit /api/register</p>
         <p>Click <a href="http://localhost:${SERVER_PORT}/api/login">here</a> to visit /api/login</p>
         <p>Click <a href="http://localhost:${SERVER_PORT}/api/logout">here</a> to visit /api/logout</p>
@@ -44,7 +56,8 @@ app.get('/', (req, res) => {
 
 // Public routes (no auth required)
 app.use('/api/public', userRoutes);    // Public routes like /users, /register, /login
-app.use('/api/auth', authRoutes);      // OAuth routes
+app.use('/api/auth', authRoutes);     // For auth-related routes (/login, /register)
+app.use('/api/users', userRoutes);    // For user-related routes (/users, /profile)
 
 // Protected routes (require JWT auth)
 app.use('/api/protected', jwtAuth, userRoutes); // All protected routes
