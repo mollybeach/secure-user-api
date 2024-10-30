@@ -9,8 +9,12 @@ router.get('/auth/github', passport.authenticate('github', { scope: ['user:email
 router.get('/auth/github/callback', 
   passport.authenticate('github', { failureRedirect: '/login' }),
   (req, res) => {
-    // Successful login, redirect to the home page or profile
-    res.redirect('/profile');
+    // Successful login, you can set a JWT or session token here
+    // Generate a JWT token if needed
+    const token = jwt.sign({ id: req.user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    // Send the token to the client or redirect to profile/home page
+    res.header('Authorization', 'Bearer ' + token).redirect('/profile');
   }
 );
 
