@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const passport = require('./middleware/oauthAuth');
 const jwtAuth = require('./middleware/jwtAuth');
