@@ -4,6 +4,7 @@ const { User } = require('../models'); // Assuming you're using Sequelize for mo
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const jwtAuth = require('../middleware/jwtAuth');
+const pool = require('../config/db'); // For raw SQL queries using the PostgreSQL connection pool
 
 // Register a new user
 router.post('/register', async (req, res) => {
@@ -64,6 +65,17 @@ router.get('/profile', jwtAuth, async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    res.status(500).send('Server error');
+  }
+});
+
+// Fetch all users from the database (New Route)
+router.get('/users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM users');
+    res.json(result.rows); // Return the rows from the query result
+  } catch (error) {
+    console.error('Error fetching users:', error);
     res.status(500).send('Server error');
   }
 });
