@@ -108,11 +108,16 @@ secure-user-api/
 │   │   └── robots.txt
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── Register.css
+│   │   │   ├── Login.js
+│   │   │   ├── Profile.js
 │   │   │   └── Register.js
 │   │   ├── styles/
 │   │   │   ├── App.css
+│   │   │   ├── Auth.css
+│   │   │   ├── Login.css
+│   │   │   ├── Profile.css
 │   │   │   └── Register.css
+│   │   ├── .DS_Store
 │   │   ├── App.js
 │   │   ├── App.test.js
 │   │   ├── index.css
@@ -120,6 +125,7 @@ secure-user-api/
 │   │   ├── logo.svg
 │   │   ├── reportWebVitals.js
 │   │   └── setupTests.js
+│   ├── .DS_Store
 │   ├── .env
 │   ├── .gitignore
 │   ├── env.example
@@ -145,14 +151,14 @@ secure-user-api/
 │   ├── authRoutes.js
 │   └── userRoutes.js
 ├── seeders/
+├── .DS_Store
 ├── .env
 ├── .gitignore
 ├── env.example
 ├── index.js
 ├── package-lock.json
 ├── package.json
-├── README.md
-└── test-api.sh
+└── README.md
 
 ```
 

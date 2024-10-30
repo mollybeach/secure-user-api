@@ -1,43 +1,21 @@
+//path: client/src/App.js
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import Register from './components/Register';
+import Login from './components/Login';
+import Profile from './components/Profile';
 import './styles/App.css';
 
-const serverPort = process.env.SERVER_PORT || 3000;
-export const apiUrl = `http://localhost:${serverPort}`;
+export const apiUrl = 'http://localhost:3000/api'; // Update to match your backend port
 
 function App() {
-  const [response, setResponse] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem('token'));
 
-  // Function to handle login
-  const handleLogin = async () => {
-    const user = {
-      email: 'johndoe@example.com',
-      password: '123456',
-    };
-
-    try {
-      const res = await fetch(`${apiUrl}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(user),
-      });
-      const data = await res.json();
-      setResponse(JSON.stringify(data, null, 2));
-    } catch (err) {
-      setResponse('Error: ' + err.message);
-    }
-  };
-
-  // Function to get all users
-  const handleGetUsers = async () => {
-    try {
-      const res = await fetch(`${apiUrl}/api/public/users`);
-      const data = await res.json();
-      setResponse(JSON.stringify(data, null, 2));
-    } catch (err) {
-      setResponse('Error: ' + err.message);
-    }
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setIsAuthenticated(false);
   };
 
   return (
@@ -46,19 +24,35 @@ function App() {
         <nav>
           <ul>
             <li><Link to="/">Home</Link></li>
-            <li><Link to="/register">Register</Link></li>
+            {!token ? (
+              <>
+                <li><Link to="/register">Register</Link></li>
+                <li><Link to="/login">Login</Link></li>
+              </>
+            ) : (
+              <>
+                <li><Link to="/profile">Profile</Link></li>
+                <li><button onClick={handleLogout}>Logout</button></li>
+              </>
+            )}
           </ul>
         </nav>
 
         <Routes>
-          <Route path="/register" element={<Register />} />
+          <Route path="/register" element={!token ? <Register /> : <Navigate to="/profile" />} />
+          <Route path="/login" element={
+            <Login 
+              setToken={setToken} 
+              setIsAuthenticated={setIsAuthenticated} 
+            />
+          } />
+          <Route path="/profile" element={
+            token ? <Profile token={token} /> : <Navigate to="/login" />
+          } />
           <Route path="/" element={
-            <div>
+            <div className="home">
               <h1>Secure User API</h1>
-              <button onClick={handleLogin}>Login</button>
-              <button onClick={handleGetUsers}>Get Users</button>
-              <h2>Response:</h2>
-              <pre>{response}</pre>
+              <p>Welcome to our secure user management system</p>
             </div>
           } />
         </Routes>

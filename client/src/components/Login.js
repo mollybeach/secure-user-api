@@ -3,14 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { apiUrl } from '../App';
 import '../styles/Auth.css';
 
-function Register() {
+function Login({ setToken, setIsAuthenticated }) {
   const [formData, setFormData] = useState({
-    username: '',
     email: '',
     password: ''
   });
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -23,10 +21,9 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
 
     try {
-      const res = await fetch(`${apiUrl}/register`, {
+      const res = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -35,18 +32,13 @@ function Register() {
       const data = await res.json();
       
       if (!res.ok) {
-        if (data.errors) {
-          const errorMessages = data.errors.map(err => err.msg).join(', ');
-          throw new Error(errorMessages);
-        }
-        throw new Error(data.error || 'Registration failed');
+        throw new Error(data.error || 'Login failed');
       }
       
-      setSuccess('Registration successful! Redirecting to login...');
-      setFormData({ username: '', email: '', password: '' });
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
+      localStorage.setItem('token', data.token);
+      setToken(data.token);
+      setIsAuthenticated(true);
+      navigate('/profile');
     } catch (err) {
       setError(err.message);
     }
@@ -54,27 +46,10 @@ function Register() {
 
   return (
     <div className="auth-container">
-      <h2>Register</h2>
+      <h2>Login</h2>
       {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
       
       <form onSubmit={handleSubmit} className="auth-form">
-        <div className="form-group">
-          <label htmlFor="username">Username:</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            value={formData.username}
-            onChange={handleInputChange}
-            required
-            minLength="3"
-          />
-          <small className="form-text">
-            Username must be at least 3 characters long
-          </small>
-        </div>
-
         <div className="form-group">
           <label htmlFor="email">Email:</label>
           <input
@@ -96,17 +71,13 @@ function Register() {
             value={formData.password}
             onChange={handleInputChange}
             required
-            minLength="6"
           />
-          <small className="form-text">
-            Password must be at least 6 characters long
-          </small>
         </div>
         
-        <button type="submit">Register</button>
+        <button type="submit">Login</button>
       </form>
     </div>
   );
 }
 
-export default Register;
+export default Login;
