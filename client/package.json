@@ -10,6 +10,8 @@
     "ajv-keywords": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
+    "passport": "^0.7.0",
+    "passport-github2": "^0.1.12",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.27.0",

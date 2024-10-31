@@ -15,12 +15,16 @@ module.exports = (sequelize) => {
       username: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true
+        unique: {
+          msg: 'Username is already taken'
+        }
       },
       email: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
+        unique: {
+          msg: 'Email is already registered'
+        },
         validate: {
           isEmail: true
         }
@@ -39,6 +43,13 @@ module.exports = (sequelize) => {
       updatedAt: {
         type: DataTypes.DATE,
         allowNull: false
+      },
+      githubId: {
+        type: DataTypes.STRING,
+        unique: {
+          msg: 'GitHub account already linked'
+        },
+        allowNull: true
       }
     },
     {

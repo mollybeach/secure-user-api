@@ -3,10 +3,12 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const passport = require('./middleware/oauthAuth');
+const passport = require('passport');
+const GitHubStrategy = require('passport-github2').Strategy;
 const session = require('express-session');
 const userRoutes = require('./routes/userRoutes');
 const { sequelize, User } = require('./models');
+const { ensureAuthenticated } = require('./middleware/auth');
 
 const app = express();
 
@@ -19,6 +21,9 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
+
+// Serve static files from the public directory
+app.use(express.static('public'));
 
 // Middleware for parsing JSON bodies
 app.use(express.json());
@@ -34,29 +39,75 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Passport configuration
+passport.use(new GitHubStrategy({
+    clientID: process.env.OAUTH_CLIENT_ID,
+    clientSecret: process.env.OAUTH_CLIENT_SECRET,
+    callbackURL: `http://localhost:${process.env.REACT_APP_SERVER_PORT}/auth/github/callback`
+  },
+  async function(accessToken, refreshToken, profile, done) {
+    try {
+      // Find or create user in your database
+      let [user] = await User.findOrCreate({
+        where: { githubId: profile.id },
+        defaults: {
+          username: profile.username,
+          email: profile.emails?.[0]?.value,
+          password: 'github-auth' // You might want to handle this differently
+        }
+      });
+      return done(null, user);
+    } catch (err) {
+      return done(err, null);
+    }
+  }
+));
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findByPk(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
+});
+
+// Add GitHub OAuth routes
+app.get('/auth/github',
+  passport.authenticate('github', { scope: [ 'user:email' ] })
+);
+
+app.get('/auth/github/callback', 
+  passport.authenticate('github', { 
+    failureRedirect: '/login?error=github_auth_failed',
+    successRedirect: '/?success=github_auth_success'
+  })
+);
+
+// Add a logout route
+app.get('/logout', (req, res) => {
+  req.logout();
+  res.redirect('/');
+});
+
 // API Routes
 app.use('/api', userRoutes);  // All routes will be prefixed with /api
 
-// Optional root route
+// Root route
 app.get('/', (_req, res) => {
-
-  res.send(`
-    <html>
-      <body>
-        <h1>Welcome to the secure-user-api!</h1>
-        <p>Available endpoints:</p>
-        <ul>
-          <li><a href="/api/users">GET /api/users</a></li>
-          <li>POST /api/register</li>
-          <li>POST /api/login</li>
-          <li>GET /api/profile (protected)</li>
-          <li>PUT /api/users/:id (protected)</li>
-          <li>DELETE /api/users/:id (protected)</li>
-          <li><a href="/api/auth/github">GitHub OAuth Login</a></li>
-        </ul>
-      </body>
-    </html>
-  `);
+  res.json({
+    message: 'Welcome to the API',
+    status: 'Server is running',
+    serverUrl: `http://localhost:${process.env.REACT_APP_SERVER_PORT}`,
+    documentation: '/api-docs', // if you have API documentation
+    version: '1.0.0'
+  });
+  
+  // Log server URL to console (optional)
   console.log(`Server URL: http://localhost:${process.env.REACT_APP_SERVER_PORT}`);
 });
 
@@ -120,6 +171,11 @@ sequelize.sync({ force: true }).then(async () => {
 }).catch(err => {
   console.error('Database sync error:', err);
   process.exit(1);
+});
+
+// Protected route example
+app.get('/profile', ensureAuthenticated, (req, res) => {
+  res.json(req.user);
 });
 
 module.exports = app;

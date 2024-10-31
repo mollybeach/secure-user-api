@@ -26,6 +26,7 @@
     "db:migrate": "npx sequelize-cli db:migrate",
     "db:migrate:undo": "npx sequelize-cli db:migrate:undo",
     "db:migrate:undo:all": "npx sequelize-cli db:migrate:undo:all",
+    "db:migrate:status": "npx sequelize-cli db:migrate:status",
     "db:seed:all": "npx sequelize-cli db:seed:all",
     "db:seed:undo:all": "npx sequelize-cli db:seed:undo:all",
     "db:reset": "npm run db:drop && npm run db:create && npm run db:migrate && npm run db:seed:all",
