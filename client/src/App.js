@@ -6,7 +6,7 @@ import Login from './components/Login';
 import Profile from './components/Profile';
 import './styles/App.css';
 
-export const apiUrl = 'http://localhost:3000/api'; // Update to match your backend port
+export const API_URL = `http://localhost:${process.env.REACT_APP_SERVER_PORT}/api`;
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

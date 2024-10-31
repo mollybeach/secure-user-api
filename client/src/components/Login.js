@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiUrl } from '../App';
+import { API_URL } from '../App';
 import '../styles/Auth.css';
 
 function Login({ setToken, setIsAuthenticated }) {
@@ -16,8 +16,8 @@ function Login({ setToken, setIsAuthenticated }) {
     setError('');
 
     try {
-      console.log('Attempting login to:', `${apiUrl}/login`); // Debug log
-      const res = await fetch(`${apiUrl}/login`, {
+      console.log('Attempting login to:', `${API_URL}/login`); // Debug log
+      const res = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

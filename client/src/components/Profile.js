@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiUrl } from '../App';
+import { API_URL } from '../App';
 import '../styles/Profile.css';
 
 function Profile({ token }) {
@@ -9,7 +9,7 @@ function Profile({ token }) {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch(`${apiUrl}/profile`, {
+        const res = await fetch(`${API_URL}/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

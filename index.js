@@ -6,13 +6,13 @@ const cors = require('cors');
 const passport = require('./middleware/oauthAuth');
 const session = require('express-session');
 const userRoutes = require('./routes/userRoutes');
-const { sequelize } = require('./models');
+const { sequelize, User } = require('./models');
 
 const app = express();
 
 // CORS configuration
 const corsOptions = {
-  origin: 'http://localhost:3001', // Your React frontend URL
+  origin: `http://localhost:${process.env.REACT_APP_CLIENT_PORT}`,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
@@ -39,7 +39,7 @@ app.use('/api', userRoutes);  // All routes will be prefixed with /api
 
 // Optional root route
 app.get('/', (_req, res) => {
-  const PORT = process.env.PORT || 3001;
+
   res.send(`
     <html>
       <body>
@@ -57,7 +57,7 @@ app.get('/', (_req, res) => {
       </body>
     </html>
   `);
-  console.log(`Server URL: http://localhost:${PORT}`);
+  console.log(`Server URL: http://localhost:${process.env.REACT_APP_SERVER_PORT}`);
 });
 
 // Global error handler
@@ -76,46 +76,50 @@ app.use((_req, res) => {
 });
 
 // Start the server with database sync
-const PORT = process.env.PORT || 3000;
+const SERVER_PORT = process.env.REACT_APP_SERVER_PORT;
 
-/*
-sequelize.sync({ alter: true })
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-      console.log(`Server URL: http://localhost:${PORT}`);
+sequelize.sync({ force: true }).then(async () => {
+  try {
+    // Seed initial data
+    await User.bulkCreate([
+      {
+        username: "johndoe",
+        email: "johndoe@example.com",
+        password: "hashedpassword1",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        username: "janedoe",
+        email: "janedoe@example.com",
+        password: "hashedpassword2",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        username: "alice",
+        email: "alice@example.com",
+        password: "hashedpassword3",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ]);
+    console.log('Database synced and seeded');
+    
+    // Start the server after successful sync and seed
+    app.listen(SERVER_PORT, () => {
+      console.log(`Server running on port ${SERVER_PORT}`);
+      console.log(`Server URL: http://localhost:${SERVER_PORT}`);
       console.log('Running in:', process.env.NODE_ENV || 'development');
       console.log('Connected to database:', process.env.DB_NAME);
     });
-  })
-  .catch(err => {
-    console.error('Database sync error:', err);
+  } catch (error) {
+    console.error('Error seeding database:', error);
     process.exit(1);
-  });*/
-// Be careful! This will drop and recreate the table
-sequelize.sync({ force: true }).then(async () => {
-  // Seed initial data
-  await User.bulkCreate([
-    {
-      id: 1,
-      username: "johndoe",
-      email: "johndoe@example.com",
-      password: "hashedpassword1"
-    },
-    {
-      id: 2,
-      username: "janedoe",
-      email: "janedoe@example.com",
-      password: "hashedpassword2"
-    },
-    {
-      id: 3,
-      email: "alice@example.com",
-      username: "alice",
-      password: "hashedpassword3"
-    }
-  ]);
-  console.log('Database synced and seeded');
+  }
+}).catch(err => {
+  console.error('Database sync error:', err);
+  process.exit(1);
 });
 
 module.exports = app;

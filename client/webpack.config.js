@@ -1,15 +1,15 @@
 require('dotenv').config({ path: '../.env' });
 
-const SERVER_PORT = process.env.SERVER_PORT || 3000;
-const CLIENT_PORT = process.env.CLIENT_PORT || 3001;
+const REACT_APP_SERVER_PORT = process.env.REACT_APP_SERVER_PORT;
+const REACT_APP_CLIENT_PORT = process.env.REACT_APP_CLIENT_PORT;
 
 module.exports = {
   // ... other config ...
   devServer: {
-    port: CLIENT_PORT,
+    port: REACT_APP_CLIENT_PORT,
     proxy: {
-      '/api': `http://localhost:${SERVER_PORT}`,
-      '/auth': `http://localhost:${SERVER_PORT}`
+      '/api': `http://localhost:${REACT_APP_SERVER_PORT}`,
+      '/auth': `http://localhost:${REACT_APP_SERVER_PORT}`
     },
   },
   // ... rest of config ...

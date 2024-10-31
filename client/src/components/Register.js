@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiUrl } from '../App';
+import { API_URL } from '../App';
 import '../styles/Auth.css';
 
 function Register() {
@@ -26,7 +26,7 @@ function Register() {
     setSuccess('');
 
     try {
-      const res = await fetch(`${apiUrl}/register`, {
+      const res = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
