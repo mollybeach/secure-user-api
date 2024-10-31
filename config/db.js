@@ -1,3 +1,4 @@
+// path: config/db.js
 const { Sequelize } = require('sequelize');
 
 let sequelize;
@@ -6,6 +7,7 @@ let sequelize;
 if (process.env.DATABASE_URL) {
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
+    logging: console.log,
     protocol: 'postgres',
     dialectOptions: {
       ssl: process.env.NODE_ENV === 'production' ? {
@@ -24,7 +26,7 @@ if (process.env.DATABASE_URL) {
       host: process.env.DB_HOST,
       port: process.env.DB_PORT,
       dialect: 'postgres',
-      logging: process.env.NODE_ENV === 'development' ? console.log : false,
+      logging: process.env.NODE_ENV === 'development' ? console.log : console.log,
       pool: {
         max: 5,
         min: 0,

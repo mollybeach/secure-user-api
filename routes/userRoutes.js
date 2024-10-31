@@ -43,7 +43,7 @@ router.post('/register', registerValidation, async (req, res) => {
 
     const { username, email, password } = req.body;
 
-    // Check if user exists (both email and username)
+    // Check if user exists
     const existingUser = await User.findOne({ 
       where: { 
         [Op.or]: [{ email }, { username }] 
@@ -58,13 +58,20 @@ router.post('/register', registerValidation, async (req, res) => {
       });
     }
 
-    // Hash password and create user
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash password
+    console.log('Hashing password for registration');
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    console.log('Generated hashed password:', hashedPassword);
+
+    // Create user
     const user = await User.create({
       username,
       email,
       password: hashedPassword
     });
+
+    console.log('User created successfully with email:', email);
 
     res.status(201).json({
       id: user.id,
@@ -81,35 +88,46 @@ router.post('/register', registerValidation, async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('Login attempt for email:', email);
 
     // Find user
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      console.log('User not found');
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Validate password
+    console.log('Stored hashed password:', user.password);
+    console.log('Attempting to compare with provided password');
+    
+    // Validate password using bcryptjs
     const validPassword = await bcrypt.compare(password, user.password);
+    console.log('Password comparison result:', validPassword);
+
     if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      console.log('Password comparison failed');
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
     // Generate JWT
     const token = jwt.sign(
       { id: user.id },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '1h' }
     );
+
+    console.log('Login successful for user:', user.email);
 
     res.json({
       token,
       user: {
         id: user.id,
+        username: user.username,
         email: user.email
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error details:', error);
     res.status(500).json({ error: 'Server error during login' });
   }
 });

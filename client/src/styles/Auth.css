@@ -48,4 +48,24 @@
   font-size: 0.875rem;
   color: #6c757d;
   margin-top: 5px;
+}
+
+.error-help {
+  font-size: 0.9em;
+  margin-top: 5px;
+  color: #721c24;
+}
+
+.auth-links {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.auth-links a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.auth-links a:hover {
+  text-decoration: underline;
 } 

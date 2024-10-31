@@ -11,35 +11,41 @@ function Login({ setToken, setIsAuthenticated }) {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     try {
+      console.log('Attempting login to:', `${apiUrl}/login`); // Debug log
       const res = await fetch(`${apiUrl}/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(formData),
       });
       
       const data = await res.json();
       
       if (!res.ok) {
-        throw new Error(data.error || 'Login failed');
+        // More specific error handling
+        if (res.status === 401) {
+          throw new Error('Invalid email or password');
+        } else {
+          throw new Error(data.error || 'Login failed');
+        }
       }
       
+      // Success case
       localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
       setToken(data.token);
       setIsAuthenticated(true);
       navigate('/profile');
     } catch (err) {
+      console.error('Login error:', err); // Debug log
       setError(err.message);
     }
   };
@@ -47,7 +53,16 @@ function Login({ setToken, setIsAuthenticated }) {
   return (
     <div className="auth-container">
       <h2>Login</h2>
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <div className="error-message">
+          {error}
+          {error === 'Invalid email or password' && (
+            <p className="error-help">
+              Please check your credentials and try again.
+            </p>
+          )}
+        </div>
+      )}
       
       <form onSubmit={handleSubmit} className="auth-form">
         <div className="form-group">
@@ -57,8 +72,12 @@ function Login({ setToken, setIsAuthenticated }) {
             id="email"
             name="email"
             value={formData.email}
-            onChange={handleInputChange}
+            onChange={(e) => setFormData({
+              ...formData,
+              email: e.target.value.trim() // Remove whitespace
+            })}
             required
+            placeholder="Enter your email"
           />
         </div>
         
@@ -69,13 +88,21 @@ function Login({ setToken, setIsAuthenticated }) {
             id="password"
             name="password"
             value={formData.password}
-            onChange={handleInputChange}
+            onChange={(e) => setFormData({
+              ...formData,
+              password: e.target.value
+            })}
             required
+            placeholder="Enter your password"
           />
         </div>
         
         <button type="submit">Login</button>
       </form>
+
+      <div className="auth-links">
+        <p>Don't have an account? <a href="/register">Register here</a></p>
+      </div>
     </div>
   );
 }

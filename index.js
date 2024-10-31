@@ -6,6 +6,7 @@ const cors = require('cors');
 const passport = require('./middleware/oauthAuth');
 const session = require('express-session');
 const userRoutes = require('./routes/userRoutes');
+const { sequelize } = require('./models');
 
 const app = express();
 
@@ -37,7 +38,7 @@ app.use(passport.session());
 app.use('/api', userRoutes);  // All routes will be prefixed with /api
 
 // Optional root route
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   const PORT = process.env.PORT || 3001;
   res.send(`
     <html>
@@ -56,10 +57,11 @@ app.get('/', (req, res) => {
       </body>
     </html>
   `);
+  console.log(`Server URL: http://localhost:${PORT}`);
 });
 
 // Global error handler
-app.use((err, req, res, next) => {
+app.use((err, _req, res, _next) => {
   console.error(err.stack);
   res.status(500).json({ 
     errors: [{ msg: 'Something broke!', error: err.message }] 
@@ -67,17 +69,53 @@ app.use((err, req, res, next) => {
 });
 
 // 404 handler
-app.use((req, res) => {
+app.use((_req, res) => {
   res.status(404).json({ 
     errors: [{ msg: 'Route not found' }] 
   });
 });
 
-// Start the server
+// Start the server with database sync
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Server URL: http://localhost:${PORT}`);
+
+/*
+sequelize.sync({ alter: true })
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Server URL: http://localhost:${PORT}`);
+      console.log('Running in:', process.env.NODE_ENV || 'development');
+      console.log('Connected to database:', process.env.DB_NAME);
+    });
+  })
+  .catch(err => {
+    console.error('Database sync error:', err);
+    process.exit(1);
+  });*/
+// Be careful! This will drop and recreate the table
+sequelize.sync({ force: true }).then(async () => {
+  // Seed initial data
+  await User.bulkCreate([
+    {
+      id: 1,
+      username: "johndoe",
+      email: "johndoe@example.com",
+      password: "hashedpassword1"
+    },
+    {
+      id: 2,
+      username: "janedoe",
+      email: "janedoe@example.com",
+      password: "hashedpassword2"
+    },
+    {
+      id: 3,
+      email: "alice@example.com",
+      username: "alice",
+      password: "hashedpassword3"
+    }
+  ]);
+  console.log('Database synced and seeded');
 });
 
 module.exports = app;

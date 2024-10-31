@@ -4,7 +4,9 @@
   "description": "A simple REST API for managing users securely with OAuth2 and JWT authentication.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "server": "node index.js",
+    "sql": "brew services restart postgresql@14"
+
   },
   "keywords": [],
   "author": "",
